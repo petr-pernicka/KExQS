@@ -7,6 +7,31 @@ There are three implementations of quantum register (all inheriting from `Quantu
 - `CLQuantumRegister` parallelized for GPUs using OpenCL,
 - and `VectorizedQuantumRegister` using SIMD instructions.
 
+Only one-qubit gates are parallelized in `CLQuantumRegister` and `VectorizedQuantumRegister`
+for now. `BasicQuantumRegister` is fully functional.
+
+### Performance
+Performance test was performed with registers of 29 qubits. In this setting, the state
+vector has 536'870'912 states and takes up 4096 MB (when using floats).
+- Computer specs: Windows 10, AMD Ryzen 5 1600X, RTX 3060 Ti
+- Compiler: GCC 13.2.0 (MinGW-W64)
+
+The test was performed on the following piece of code:
+```c++
+for (size_t i = 0; i < qRegister->qubits(); ++i)
+	qRegister->hadamard(i);
+```
+
+Results:
+
+| Implementation              | Time     |
+|-----------------------------|----------|
+| `BasicQuantumRegister`      | 569.465s |
+| `CLQuantumRegister`         | 7.865s   |
+| `VectorizedQuantumRegister` | 24.358s  |
+
+
+
 ### Example
 File `main.cpp` contains an example of usage:
 ```c++

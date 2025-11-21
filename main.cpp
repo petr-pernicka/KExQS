@@ -2,6 +2,8 @@
 #include <iostream>
 #include <random>
 #include <chrono>
+#include <map>
+
 #include "src/circuit/BasicQuantumRegister.h"
 #include "src/circuit/CLQuantumRegister.h"
 #include "src/circuit/VectorizedQuantumRegister.h"
@@ -45,44 +47,33 @@ std::vector<complex_t> randomStateVector(size_t numQubits) {
 }
 
 void speedTest() {
-	size_t numQubits = 28;
+	size_t numQubits = 29;
 	std::cout << "State vetor size: " << (1 << numQubits) * sizeof(complex_t) / 1024 / 1024 << " MB" << std::endl;
 	std::cout << "Number of states: " << (1 << numQubits) << std::endl;
 
 	cl::Device device = getDevice(CL_DEVICE_TYPE_GPU);
 	cl::Context context(device);
-	auto qRegister = std::make_unique<Circuit::VectorizedQuantumRegister>(numQubits/*, context, device*/);
-	qRegister->setStateVector(randomStateVector(numQubits));
 
+	std::cout << "Generating random state vector..." << std::endl;
+	auto stateVector = randomStateVector(numQubits);
 
-	std::cout << "Timing applyOneQubitGate... ";
-	auto tick = std::chrono::system_clock::now();
+	std::map<std::string, std::unique_ptr<Circuit::QuantumRegister>> registers;
+	registers["BasicQuantumRegister"] = std::make_unique<Circuit::BasicQuantumRegister>(numQubits);
+	registers["CLQuantumRegister"] = std::make_unique<Circuit::CLQuantumRegister>(numQubits, context, device);
+	registers["VectorizedQuantumRegister"] = std::make_unique<Circuit::VectorizedQuantumRegister>(numQubits);
 
-	for (size_t i = 0; i < qRegister->qubits(); ++i)
-		qRegister->hadamard(i);
+	for (auto &[name, qRegister] : registers) {
+		qRegister->setStateVector(stateVector);
 
-	auto tock = std::chrono::system_clock::now();
-	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick) << std::endl;
+		std::cout << "Timing " << name << std::endl;
 
+		auto tick = std::chrono::system_clock::now();
+		for (size_t i = 0; i < qRegister->qubits(); ++i)
+			qRegister->hadamard(i);
 
-	std::cout << "Timing applyTwoQubitGate... ";
-	tick = std::chrono::system_clock::now();
-
-	for (size_t i = 1; i < qRegister->qubits(); ++i)
-		qRegister->controlledX(0, i);
-
-	tock = std::chrono::system_clock::now();
-	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick) << std::endl;
-
-
-	std::cout << "Timing applyKQubitGate... ";
-	tick = std::chrono::system_clock::now();
-
-	for (size_t i = 2; i < qRegister->qubits(); ++i)
-		qRegister->toffoli(0, 1, i);
-
-	tock = std::chrono::system_clock::now();
-	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick) << std::endl;
+		auto tock = std::chrono::system_clock::now();
+		std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick) << std::endl;
+	}
 }
 
 int main() {
