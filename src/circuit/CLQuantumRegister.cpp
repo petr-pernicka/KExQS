@@ -4,33 +4,14 @@
 namespace KQS::Circuit {
 
 	std::string readFileToString(const char *path) {
-		FILE *f = std::fopen(path, "rb");
-		if (!f)
-			throw std::runtime_error(std::string("Failed to open file: ") + path);
+		std::ifstream f(path);
+		if (f.fail())
+			throw std::runtime_error("Failed to open file " + std::string(path));
 
-		if (std::fseek(f, 0, SEEK_END) != 0) {
-			std::fclose(f);
-			throw std::runtime_error("fseek failed");
-		}
+		std::stringstream ss;
+		ss << f.rdbuf();
 
-		long size = std::ftell(f);
-		if (size < 0) {
-			std::fclose(f);
-			throw std::runtime_error("ftell failed");
-		}
-
-		std::rewind(f);
-
-		std::string content;
-		content.resize(static_cast<size_t>(size));
-
-		size_t read = std::fread(content.data(), 1, content.size(), f);
-		std::fclose(f);
-
-		if (read != content.size())
-			throw std::runtime_error("fread failed or partial read");
-
-		return content;
+		return ss.str();
 	}
 
 	CLQuantumRegister::CLQuantumRegister(size_t numberOfQubits, const cl::Context &context, const cl::Device &device)

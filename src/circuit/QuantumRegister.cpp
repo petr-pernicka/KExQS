@@ -1,4 +1,3 @@
-#include <format>
 #include <bitset>
 #include <iomanip>
 #include <cstdint>
@@ -27,13 +26,14 @@ namespace KQS::Circuit {
 			real_t prob = std::norm(vector[i]);
 			probSum += prob;
 
-			std::string ket = std::format("|{}>", std::bitset<64>(i).to_string().substr(64 - fNumQubits));
-			char sign = vector[i].imag() >= 0 ? '+' : '-';
-			ss << ket << ": ";
+			std::string a = std::bitset<64>(i).to_string().substr(64 - fNumQubits);
+			ss << '|' << a << ">: ";
 			if (vector[i].real() >= 0)
 				ss << ' ';
+
+			char sign = vector[i].imag() >= 0 ? '+' : '-';
 			ss << vector[i].real() << ' ' << sign << ' ' << std::abs(vector[i].imag())
-			   << "i;  p(" << ket << ") = " << prob << "\n";
+			   << "i;  p(|" << a << ">) = " << prob << "\n";
 		}
 		ss << "Sum of probabilities: " << probSum << "\n";
 
@@ -130,6 +130,6 @@ namespace KQS::Circuit {
 			sum += std::norm(state);
 
 		if (std::abs(sum - 1) > 1e-8)
-			throw std::runtime_error(std::format("State vector is not normalized. Sum of probs: {}", sum));
+			throw std::runtime_error("State vector is not normalized. Sum of probs: " + std::to_string(sum));
 	}
 }
