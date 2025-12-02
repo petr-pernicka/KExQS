@@ -10,17 +10,19 @@ namespace KQS::Circuit {
 		size_t groups = fNumStates / 2;
 
 		// prepare registers for matrix-vector multiplication
-		__m256 m = _mm256_loadu_ps(reinterpret_cast<const float *>(gate.matrix().data().data()));
+		const ComplexMatrix &m = gate.matrix();
 
-		__m128 low = _mm256_extractf128_ps(m, 0);  // [b_im, b_re, a_im, a_re]
-		__m128 high = _mm256_extractf128_ps(m, 1); // [d_im, d_re, c_im, c_re]
-		__m128 ac0 = _mm_shuffle_ps(low, high, _MM_SHUFFLE(1, 0, 1, 0)); // [c_im, c_re, a_im, a_re]
-		__m128 bd0 = _mm_shuffle_ps(low, high, _MM_SHUFFLE(3, 2, 3, 2)); // [d_im, d_re, b_im, b_re]
-		__m128 ac1 = _mm_shuffle_ps(low, high, _MM_SHUFFLE(0, 1, 0, 1)); // [c_re, c_im, a_re, a_im]
-		__m128 bd1 = _mm_shuffle_ps(low, high, _MM_SHUFFLE(2, 3, 2, 3)); // [d_re, d_im, b_re, b_im]
-		__m128 mask = _mm_set_ps(1, -1, 1, -1);
-		ac1 = _mm_mul_ps(ac1, mask); // [c_re, -c_im, a_re, -a_im]
-		bd1 = _mm_mul_ps(bd1, mask); // [d_re, -d_im, b_re, -b_im]
+		// [m00_re, m00_im, m10_re, m10_im]
+		__m128 col0 = _mm_set_ps(m[0, 0].real(), m[0, 0].imag(), m[1, 0].real(), m[1, 0].imag());
+		// [m01_re, m01_im, m11_re, m11_im]
+		__m128 col1 = _mm_set_ps(m[0, 1].real(), m[0, 1].imag(), m[1, 1].real(), m[1, 1].imag());
+		__m128 mask = _mm_set_ps(-1, 1, -1, 1);
+		__m128 col2 = _mm_permute_ps(col0, 0b10'11'00'01);
+		// [-m00_im, m00_re, -m10_im, m10_re]
+		col2 = _mm_mul_ps(col2, mask);
+		__m128 col3 = _mm_permute_ps(col1, 0b10'11'00'01);
+		// [-m01_im, m01_re, -m11_im, m11_re]
+		col3 = _mm_mul_ps(col3, mask);
 
 		// prepare registers for vectorized insertBit
 		__m128i j = _mm_set_epi64x(1, 0);
@@ -36,7 +38,7 @@ namespace KQS::Circuit {
 			xx = _mm_or_si128(xx, tmp);
 
 			alignas(16) size_t indices[2];
-			_mm_store_si128((__m128i *) indices, xx);
+			_mm_store_si128(reinterpret_cast<__m128i *>(indices), xx);
 
 			// complex matrix multiplication
 			__m128 x_re = _mm_set1_ps(fStateVector[indices[0]].real());
@@ -44,17 +46,17 @@ namespace KQS::Circuit {
 			__m128 y_re = _mm_set1_ps(fStateVector[indices[1]].real());
 			__m128 y_im = _mm_set1_ps(fStateVector[indices[1]].imag());
 
-			__m128 z;
-			z = _mm_mul_ps(ac0, x_re);      // ac0 * x_re
-			z = _mm_fmadd_ps(ac1, x_im, z); // ac0 * x_re + ac1 * x_im
-			z = _mm_fmadd_ps(bd0, y_re, z); // ac0 * x_re + ac1 * x_im + bd0 * y_re
-			z = _mm_fmadd_ps(bd1, y_im, z); // ac0 * x_re + ac1 * x_im + bd0 * y_re + bd1 * y_im
+			__m128 z = _mm_setzero_ps();
+			z = _mm_fmadd_ps(x_re, col0, z);
+			z = _mm_fmadd_ps(x_im, col2, z);
+			z = _mm_fmadd_ps(y_re, col1, z);
+			z = _mm_fmadd_ps(y_im, col3, z);
 
 			alignas(16) float res[4];
 			_mm_store_ps(res, z);
 
-			fStateVector[indices[0]] = complex_t(res[0], res[1]);
-			fStateVector[indices[1]] = complex_t(res[2], res[3]);
+			fStateVector[indices[0]] = complex_t(res[3], res[2]);
+			fStateVector[indices[1]] = complex_t(res[1], res[0]);
 		}
 	}
 
