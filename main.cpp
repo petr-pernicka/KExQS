@@ -32,7 +32,7 @@ cl::Device getDevice(cl_device_type type) {
 std::vector<complex_t> randomStateVector(size_t numQubits) {
 	std::vector<complex_t> stateVector(1 << numQubits);
 	std::uniform_real_distribution<real_t> uniform01(0, 1);
-	std::random_device rng;
+	std::mt19937 rng(42);
 
 	real_t sum = 0;
 	for (auto &i : stateVector) {

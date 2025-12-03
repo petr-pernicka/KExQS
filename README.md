@@ -10,7 +10,7 @@ There are three implementations of quantum register (all inheriting from `Quantu
 Only one-qubit gates are parallelized in `CLQuantumRegister` and `VectorizedQuantumRegister`
 for now. `BasicQuantumRegister` is fully functional.
 
-### Performance
+## Performance
 Performance test was performed with registers of 29 qubits. In this setting, the state
 vector has 536'870'912 states and takes up 4096 MB (when using floats).
 - Computer specs: Windows 10, AMD Ryzen 5 1600X, RTX 3060 Ti
@@ -32,7 +32,7 @@ Results:
 
 
 
-### Example
+## Example
 File `main.cpp` contains an example of usage:
 ```c++
 size_t numQubits = 4;
