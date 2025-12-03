@@ -7,7 +7,7 @@
 #include "src/circuit/BasicQuantumRegister.h"
 #include "src/circuit/CLQuantumRegister.h"
 #include "src/circuit/VectorizedQuantumRegister.h"
-#include "src/Constants.h"
+#include "src/algebra/Constants.h"
 #include "CL/opencl.hpp"
 
 using namespace KQS;
@@ -91,7 +91,7 @@ int main() {
 	qRegister->controlledX(1, 2);
 	qRegister->controlledZ(0, 3);
 	qRegister->controlledY(1, 3);
-	qRegister->controlledPhase(0, 1, Constants::PI / 3);
+	qRegister->controlledPhase(0, 1, PI / 3);
 	qRegister->controlledX(1, 2);
 	qRegister->toffoli(2, 1, 3);
 
