@@ -70,6 +70,9 @@ namespace KQS::Circuit {
 
 		cl_int err = fQueue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(groups));
 		CL_CHECK(err)
+
+		err = fQueue.finish();
+		CL_CHECK(err)
 	}
 
 	void CLQuantumRegister::applyTwoQubitGate(const QuantumLogicGate &gate, std::array<size_t, 2> targetQubits) {
