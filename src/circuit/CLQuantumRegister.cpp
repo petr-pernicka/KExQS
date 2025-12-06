@@ -1,5 +1,6 @@
 #include <fstream>
 #include "CLQuantumRegister.h"
+#include "../utils.h"
 
 namespace KQS::Circuit {
 

@@ -9,6 +9,7 @@ find_package(OpenCL REQUIRED)
 add_executable(KExQS main.cpp
         src/algebra/Constants.h
         src/types.h
+        src/utils.h
         src/circuit/QuantumLogicGate.cpp src/circuit/QuantumLogicGate.h
         src/algebra/Matrix.cpp src/algebra/Matrix.h
         src/circuit/QuantumRegister.cpp src/circuit/QuantumRegister.h
