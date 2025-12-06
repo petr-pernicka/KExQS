@@ -79,7 +79,7 @@ namespace KQS::Circuit {
 		if (targetQubits[0] > targetQubits[1])
 			targetQubits[0]--;
 
-		cl::Buffer dGate(fContext, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+		cl::Buffer dGate(fContext, CL_MEM_READ_WRITE,
 			gate.matrix().rows() * gate.matrix().columns() * sizeof(complex_t), nullptr, &err);
 		CL_CHECK(err)
 		err = fQueue.enqueueWriteBuffer(dGate, CL_TRUE, 0,
