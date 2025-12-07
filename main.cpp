@@ -62,6 +62,7 @@ void speedTest() {
 	registers["CLQuantumRegister"] = std::make_unique<Circuit::CLQuantumRegister>(numQubits, context, device);
 	registers["VectorizedQuantumRegister"] = std::make_unique<Circuit::VectorizedQuantumRegister>(numQubits);
 
+	std::cout << "\nOne qubit gate test" << std::endl;
 	for (auto &[name, qRegister] : registers) {
 		qRegister->setStateVector(stateVector);
 
@@ -70,6 +71,20 @@ void speedTest() {
 		auto tick = std::chrono::system_clock::now();
 		for (size_t i = 0; i < qRegister->qubits(); ++i)
 			qRegister->hadamard(i);
+
+		auto tock = std::chrono::system_clock::now();
+		std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick) << std::endl;
+	}
+
+	std::cout << "\nTwo qubit gate test" << std::endl;
+	for (auto &[name, qRegister] : registers) {
+		qRegister->setStateVector(stateVector);
+
+		std::cout << "Timing " << name << std::endl;
+
+		auto tick = std::chrono::system_clock::now();
+		for (size_t i = 1; i < qRegister->qubits(); ++i)
+			qRegister->controlledX(0, i);
 
 		auto tock = std::chrono::system_clock::now();
 		std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick) << std::endl;
