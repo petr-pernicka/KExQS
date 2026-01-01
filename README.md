@@ -41,7 +41,7 @@ Results:
 | Implementation              | Time  |
 |-----------------------------|-------|
 | `BasicQuantumRegister`      | 375s  |
-| `VectorizedQuantumRegister` | 55s   |
+| `VectorizedQuantumRegister` | 46s   |
 | `CLQuantumRegister`         | 726ms |
 
 ## Example

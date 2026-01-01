@@ -85,18 +85,33 @@ namespace KQS::Circuit {
 		col7 = _mm256_mul_ps(col7, mask);
 
 
-		std::array<size_t, 4> indices{};
+		__m256i j0 = _mm256_set_epi64x(1, 0, 1, 0);
+		__m256i j1 = _mm256_set_epi64x(1, 1, 0, 0);
+		__m256i mask0 = _mm256_set1_epi64x((1ULL << targetQubits[0]) - 1);
+		__m256i mask1 = _mm256_set1_epi64x((1ULL << targetQubits[1]) - 1);
+
+
 		for (size_t i = 0; i < groups; ++i) {
 
-			for (int j = 0; j < 4; ++j) {
-				// combine i and j into a state
-				size_t state = i;
+			__m256i xx = _mm256_set1_epi64x(i);
 
-				state = insertBitAtPosition(state, j & 1, targetQubits[0]);
-				state = insertBitAtPosition(state, (j >> 1) & 1, targetQubits[1]);
+			__m256i tmp = _mm256_and_si256(xx, mask0);
+			xx = _mm256_srli_epi64(xx, targetQubits[0]);
+			xx = _mm256_slli_epi64(xx, 1);
+			xx = _mm256_or_si256(xx, j0);
+			xx = _mm256_slli_epi64(xx, targetQubits[0]);
+			xx = _mm256_or_si256(xx, tmp);
 
-				indices[j] = state;
-			}
+			tmp = _mm256_and_si256(xx, mask1);
+			xx = _mm256_srli_epi64(xx, targetQubits[1]);
+			xx = _mm256_slli_epi64(xx, 1);
+			xx = _mm256_or_si256(xx, j1);
+			xx = _mm256_slli_epi64(xx, targetQubits[1]);
+			xx = _mm256_or_si256(xx, tmp);
+
+			alignas(32) size_t indices[4];
+			_mm256_store_si256((__m256i *) indices, xx);
+
 
 			__m256 x0_re = _mm256_set1_ps(fStateVector[indices[0]].real());
 			__m256 x0_im = _mm256_set1_ps(fStateVector[indices[0]].imag());
