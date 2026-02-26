@@ -7,7 +7,7 @@
 #include "src/circuit/BasicQuantumRegister.h"
 #include "src/circuit/CLQuantumRegister.h"
 #include "src/circuit/VectorizedQuantumRegister.h"
-#include "src/Constants.h"
+#include "src/algebra/Constants.h"
 #include "CL/opencl.hpp"
 
 using namespace KQS;
@@ -32,7 +32,7 @@ cl::Device getDevice(cl_device_type type) {
 std::vector<complex_t> randomStateVector(size_t numQubits) {
 	std::vector<complex_t> stateVector(1 << numQubits);
 	std::uniform_real_distribution<real_t> uniform01(0, 1);
-	std::random_device rng;
+	std::mt19937 rng(42);
 
 	real_t sum = 0;
 	for (auto &i : stateVector) {
@@ -62,6 +62,7 @@ void speedTest() {
 	registers["CLQuantumRegister"] = std::make_unique<Circuit::CLQuantumRegister>(numQubits, context, device);
 	registers["VectorizedQuantumRegister"] = std::make_unique<Circuit::VectorizedQuantumRegister>(numQubits);
 
+	std::cout << "\nOne qubit gate test" << std::endl;
 	for (auto &[name, qRegister] : registers) {
 		qRegister->setStateVector(stateVector);
 
@@ -70,6 +71,20 @@ void speedTest() {
 		auto tick = std::chrono::system_clock::now();
 		for (size_t i = 0; i < qRegister->qubits(); ++i)
 			qRegister->hadamard(i);
+
+		auto tock = std::chrono::system_clock::now();
+		std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick) << std::endl;
+	}
+
+	std::cout << "\nTwo qubit gate test" << std::endl;
+	for (auto &[name, qRegister] : registers) {
+		qRegister->setStateVector(stateVector);
+
+		std::cout << "Timing " << name << std::endl;
+
+		auto tick = std::chrono::system_clock::now();
+		for (size_t i = 1; i < qRegister->qubits(); ++i)
+			qRegister->controlledX(0, i);
 
 		auto tock = std::chrono::system_clock::now();
 		std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick) << std::endl;
@@ -91,7 +106,7 @@ int main() {
 	qRegister->controlledX(1, 2);
 	qRegister->controlledZ(0, 3);
 	qRegister->controlledY(1, 3);
-	qRegister->controlledPhase(0, 1, Constants::PI / 3);
+	qRegister->controlledPhase(0, 1, PI / 3);
 	qRegister->controlledX(1, 2);
 	qRegister->toffoli(2, 1, 3);
 

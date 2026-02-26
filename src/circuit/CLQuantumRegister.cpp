@@ -1,10 +1,11 @@
 #include <fstream>
 #include "CLQuantumRegister.h"
+#include "../utils.h"
 
 namespace KQS::Circuit {
 
 	std::string readFileToString(const char *path) {
-		std::ifstream f(path);
+		std::ifstream f(path); // bugged on MinGW
 		if (f.fail())
 			throw std::runtime_error("Failed to open file " + std::string(path));
 
@@ -46,7 +47,8 @@ namespace KQS::Circuit {
 	}
 
 	void CLQuantumRegister::setStateVector(const std::vector<complex_t> &stateVector) {
-
+		cl_int err = fQueue.enqueueWriteBuffer(fStateVector, CL_TRUE, 0, fNumStates * sizeof(complex_t), stateVector.data());
+		CL_CHECK(err)
 	}
 
 	std::vector<complex_t> CLQuantumRegister::stateVector() const {
@@ -69,10 +71,36 @@ namespace KQS::Circuit {
 
 		cl_int err = fQueue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(groups));
 		CL_CHECK(err)
+
+		err = fQueue.finish();
+		CL_CHECK(err)
 	}
 
 	void CLQuantumRegister::applyTwoQubitGate(const QuantumLogicGate &gate, std::array<size_t, 2> targetQubits) {
+		cl_int err;
+		size_t groups = fNumStates / 4;
 
+		if (targetQubits[0] > targetQubits[1])
+			targetQubits[0]--;
+
+		cl::Buffer dGate(fContext, CL_MEM_READ_WRITE,
+			gate.matrix().rows() * gate.matrix().columns() * sizeof(complex_t), nullptr, &err);
+		CL_CHECK(err)
+		err = fQueue.enqueueWriteBuffer(dGate, CL_TRUE, 0,
+			gate.matrix().rows() * gate.matrix().columns() * sizeof(complex_t), gate.matrix().data().data());
+		CL_CHECK(err)
+
+		cl::Kernel kernel(fKernels, "applyTwoQubitGate");
+		kernel.setArg(0, fStateVector);
+		kernel.setArg(1, targetQubits[0]);
+		kernel.setArg(2, targetQubits[1]);
+		kernel.setArg(3, dGate);
+
+		err = fQueue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(groups));
+		CL_CHECK(err)
+
+		err = fQueue.finish();
+		CL_CHECK(err)
 	}
 
 	void CLQuantumRegister::applyKQubitGate(const QuantumLogicGate &gate, const std::vector<size_t> &targetQubits) {

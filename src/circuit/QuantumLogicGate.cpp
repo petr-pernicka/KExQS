@@ -1,5 +1,5 @@
 #include "QuantumLogicGate.h"
-#include "../Constants.h"
+#include "../algebra/Constants.h"
 
 namespace KQS::Circuit {
 
@@ -26,10 +26,9 @@ namespace KQS::Circuit {
 	}
 
 	QuantumLogicGate QuantumLogicGate::pauliY() {
-		constexpr auto i = KQS::Constants::I;
 		ComplexMatrix matrix = {
-				{0, -i},
-				{i, 0}
+				{0, -I},
+				{I, 0}
 		};
 
 		return QuantumLogicGate(matrix);
@@ -58,12 +57,11 @@ namespace KQS::Circuit {
 	}
 
 	QuantumLogicGate QuantumLogicGate::controlledY() {
-		constexpr auto i = KQS::Constants::I;
 		ComplexMatrix matrix = {
 				{1, 0, 0, 0},
 				{0, 1, 0, 0},
-				{0, 0, 0, -i},
-				{0, 0, i, 0},
+				{0, 0, 0, -I},
+				{0, 0, I, 0},
 		};
 
 		return QuantumLogicGate(matrix);
@@ -82,15 +80,15 @@ namespace KQS::Circuit {
 
 	QuantumLogicGate QuantumLogicGate::hadamard() {
 		ComplexMatrix matrix = {
-				{KQS::Constants::recSqrt2, KQS::Constants::recSqrt2},
-				{KQS::Constants::recSqrt2, -KQS::Constants::recSqrt2}
+				{RecSqrt2, RecSqrt2},
+				{RecSqrt2, -RecSqrt2}
 		};
 
 		return QuantumLogicGate(matrix);
 	}
 
 	QuantumLogicGate QuantumLogicGate::phase(real_t phase) {
-		complex_t p = std::exp(phase * KQS::Constants::I);
+		complex_t p = std::exp(phase * I);
 		ComplexMatrix matrix = {
 				{1, 0},
 				{0, p}
@@ -100,7 +98,7 @@ namespace KQS::Circuit {
 	}
 
 	QuantumLogicGate QuantumLogicGate::controlledPhase(real_t phase) {
-		complex_t p = std::exp(phase * KQS::Constants::I);
+		complex_t p = std::exp(phase * I);
 		ComplexMatrix matrix = {
 				{1, 0, 0, 0},
 				{0, 1, 0, 0},
@@ -112,7 +110,7 @@ namespace KQS::Circuit {
 	}
 
 	QuantumLogicGate QuantumLogicGate::piOverEight() {
-		complex_t p = std::exp(KQS::Constants::PI / 4 * KQS::Constants::I);
+		complex_t p = std::exp(PI / 4 * I);
 		ComplexMatrix matrix = {
 				{1, 0},
 				{0, p}
